@@ -340,7 +340,27 @@ export function SortableTree<
     document.body.style.setProperty('cursor', 'grabbing');
   }
 
-  function handleDragMove({ delta }: DragMoveEvent) {
+  function handleDragMove({ active, activatorEvent, delta }: DragMoveEvent) {
+    const activeItem = flattenedItems.find(({ id }) => id === active.id);
+    const activeRect = active.rect.current.initial;
+    const pointerStartX =
+      (typeof MouseEvent !== 'undefined' && activatorEvent instanceof MouseEvent) ||
+      (typeof PointerEvent !== 'undefined' && activatorEvent instanceof PointerEvent)
+        ? activatorEvent.clientX
+        : null;
+
+    if (activeItem && activeRect && pointerStartX !== null) {
+      const treeLeft = activeRect.left - activeItem.depth * indentationWidth;
+      const pointerX = pointerStartX + delta.x;
+      const projectedDepth = Math.max(
+        canRootHaveChildren ? 1 : 0,
+        Math.round((pointerX - treeLeft) / indentationWidth)
+      );
+
+      setOffsetLeft((projectedDepth - activeItem.depth) * indentationWidth);
+      return;
+    }
+
     setOffsetLeft(delta.x);
   }
 
